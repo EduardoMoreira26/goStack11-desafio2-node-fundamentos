@@ -1,6 +1,5 @@
 import Transaction from '../models/Transaction';
 
-
 interface Balance {
   income: number;
   outcome: number;
@@ -24,15 +23,37 @@ class TransactionsRepository {
     return this.transactions;
   }
 
-  public getIncome(): number{
-
-  }
-
   public getBalance(): Balance {
-    // TODO
+    const income = this.transactions.reduce((previous, current) => {
+      if(current.type === 'income'){
+        return previous + current.value;
+      }
+      return previous;
+    }, 0);
+
+    const outcome = this.transactions.reduce((previous, current) => {
+      if(current.type === 'outcome'){
+        return previous + current.value;
+      }
+      return previous;
+    }, 0);
+
+    const total = income - outcome;
+
+    return {
+      income,
+      outcome,
+      total,
+    };
   }
 
   public create({ title, value, type }: Request): Transaction {
+    const { total } = this.getBalance();
+
+    if(total < value && type === 'outcome'){
+      throw new Error("insufficient funds");
+    }
+
     const transaction = new Transaction({
       title,
       type,
